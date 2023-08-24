@@ -1,0 +1,46 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'pastel_solana_archival_data_integration_api'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=pastel_solana_archival_data_integration_api",
+                    "--package=pastel_solana_archival_data_integration_api"
+                ],
+                "filter": {
+                    "name": "pastel_solana_archival_data_integration_api",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": { "RUST_LOG": "debug" },
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'pastel_solana_archival_data_integration_api'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=pastel_solana_archival_data_integration_api",
+                    "--package=pastel_solana_archival_data_integration_api"
+                ],
+                "filter": {
+                    "name": "pastel_solana_archival_data_integration_api",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": { "RUST_LOG": "debug" },
+            "console": "integratedTerminal"
+        }
+    ]
+}
