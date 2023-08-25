@@ -17,7 +17,6 @@ impl SolanaConnector {
 
         let (ws_stream, _) = connect_async(ALCHEMY_URL).await?;
         let (write, mut read) = ws_stream.split();
-        let mut write_handle = write.sink_map_err(|e| format!("WebSocket write error: {}", e));
 
         let subscriptions = vec![
             json!({"jsonrpc": "2.0", "id": 1, "method": "signatureSubscribe", "params": ["all"]}),
@@ -26,31 +25,39 @@ impl SolanaConnector {
             json!({"jsonrpc": "2.0", "id": 4, "method": "blockSubscribe"}),
             json!({"jsonrpc": "2.0", "id": 5, "method": "logsSubscribe", "params": ["all"]}),
         ];
-        tokio::spawn(async move {
-            for subscription in subscriptions {
-                write_handle.send(Message::Text(subscription.to_string())).await.ok();
-            }
-        });
-        let error_tx_clone = error_tx.clone();
+
+        let mut write_handle = write.sink_map_err(|e| format!("WebSocket write error: {}", e));
+        
+        // Send the subscriptions to the WebSocket
+        for subscription in subscriptions {
+            write_handle.send(Message::Text(subscription.to_string())).await?;
+        }
+
         tokio::spawn(async move {
             while let Some(msg) = read.next().await {
                 match msg {
                     Ok(msg) => {
-                        let message_content = msg.to_string();
-                        let json_msg: Result<serde_json::Value, _> = serde_json::from_str(&message_content);
-                        if let Ok(json_msg) = json_msg {
-                            if let Some(method) = json_msg.get("method").and_then(|v| v.as_str()) {
-                                if verbose_logging {
-                                    debug!("Received message of type {}, length: {}", method, message_content.len());
+                        if msg.is_text() {
+                            match msg.to_text() {
+                                Ok(message_content) => {
+                                    let json_msg: Result<serde_json::Value, _> = serde_json::from_str(&message_content);
+                                    if let Ok(json_msg) = json_msg {
+                                        if verbose_logging {
+                                            let method = json_msg.get("method").and_then(|v| v.as_str()).unwrap_or("");
+                                            debug!("Received message of type {}, length: {}", method, message_content.len());
+                                        }
+                                        tx.send(message_content.to_string()).await.ok();
+                                    }
+                                }
+                                Err(err) => {
+                                    error!("Error converting message to text: {}", err);
                                 }
                             }
                         }
-                        tx.send(message_content).await.ok();
                     }
                     Err(err) => {
                         error!("Error reading message: {}", err);
-                        // Send error signal to trigger reconnection
-                        error_tx_clone.send(()).await.ok();
+                        error_tx.send(()).await.ok();
                         break;
                     }
                 }
