@@ -41,6 +41,26 @@
             "cwd": "${workspaceFolder}",
             "env": { "RUST_LOG": "debug" },
             "console": "integratedTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'old_faithful_solana_connector'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=old_faithful_solana_connector",
+                    "--package=pastel_solana_archival_data_integration_api"
+                ],
+                "filter": {
+                    "name": "old_faithful_solana_connector",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": { "RUST_LOG": "debug" },
+            "console": "integratedTerminal"
         }
     ]
 }
