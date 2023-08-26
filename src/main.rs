@@ -82,9 +82,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let cpu_usage = cpu_usage / sys.cpus().len() as f32;
                 // Filter disks based on mount point starting with "/dev/"
                 let disk_usage: u64 = sys.disks().iter()
-                    .filter(|d| d.mount_point().to_str().map_or(false, |s| s.starts_with("/dev/")))
-                    .map(|d| d.available_space())
-                    .sum();
+                .filter(|d| d.mount_point().to_str().map_or(false, |s| s == "/"))
+                .map(|d| d.available_space())
+                .sum();
                 let disk_usage_gb = disk_usage as f64 / 1024.0 / 1024.0 / 1024.0; // Convert bytes to gigabytes
                 debug!("CPU Usage: {}%, Disk Available Space: {} gb", cpu_usage, disk_usage_gb);
                 if disk_usage < DISK_SPACE_THRESHOLD {
